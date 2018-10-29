@@ -48,22 +48,31 @@ imdsTrain = augmentedImageDatastore([s(1) s(2) 3],imdsTrain, 'DataAugmentation',
 %% Charger le réseau pré-entrainé
 net = googlenet
 %net = googlenet;
-net.Layers
+% net.Layers
 
 %% On remplace les couches finales
-layersTransfer = layerGraph(net);
+lgraph = layerGraph(net);
+% figure
+% plot(lgraph);
 numClasses = numel(categories(imds.Labels));
 layers = [
-    layersTransfer
-    fullyConnectedLayer(numClasses,'WeightLearnRateFactor',20,'BiasLearnRateFactor',20)
-    softmaxLayer
-    classificationLayer];
+%     layersTransfer
+    fullyConnectedLayer(numClasses,'WeightLearnRateFactor',20,'BiasLearnRateFactor',20,'Name','loss3-classifier')
+    softmaxLayer('Name','prob')
+    classificationLayer('Name','output')];
+
+lgraph = removeLayers(lgraph,'loss3-classifier');
+lgraph = removeLayers(lgraph,'prob');
+lgraph = removeLayers(lgraph,'output');
+
+lgraph = addLayers(lgraph, layers);
+lgraph = connectLayers(lgraph,'pool5-drop_7x7_s1','loss3-classifier');
 
 %% Options d'entrainement
 options = trainingOptions('sgdm', ...
     'MiniBatchSize',32, ...
     'MaxEpochs',1, ...
-    'InitialLearnRate',0.00012, ...
+    'InitialLearnRate',0.001, ...
     'ValidationData',imdsValidation, ...
     'ValidationFrequency',116, ...
     'ValidationPatience',Inf, ...
@@ -83,7 +92,7 @@ options = trainingOptions('sgdm', ...
 %       'MaxEpochs',2);
   
 %% Entrainement!!
-net = trainNetwork(imdsTrain,layerGraph(net),options);
+net = trainNetwork(imdsTrain,lgraph,options);
 
 %% Mesure la précision
 % YPred = classify(net,imdsValidation);

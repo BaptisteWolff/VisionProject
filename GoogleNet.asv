@@ -51,13 +51,25 @@ net = googlenet
 net.Layers
 
 %% On remplace les couches finales
-layersTransfer = net.Layers(1:end-3);
+lgraph = layerGraph(net);
 numClasses = numel(categories(imds.Labels));
 layers = [
-    layersTransfer
-    fullyConnectedLayer(numClasses,'WeightLearnRateFactor',20,'BiasLearnRateFactor',20)
-    softmaxLayer
-    classificationLayer];
+%     layersTransfer
+    fullyConnectedLayer(numClasses,'WeightLearnRateFactor',20,'BiasLearnRateFactor',20,'Name','loss3-classifier')
+    softmaxLayer('Name','prob')
+    classificationLayer('Name','output')];
+
+% layer1 = fullyConnectedLayer(numClasses,'WeightLearnRateFactor',20,'BiasLearnRateFactor',20,'Name','loss3-classifier');
+% layer2 = softmaxLayer('Name','prob');
+% layer3 = classificationLayer('Name','output');
+
+lgraph = removeLayers(lgraph,'loss3-classifier','prob','output');
+
+% lgraph = replaceLayer(lgraph,'loss3-classifier',layer1);
+% lgraph = replaceLayer(lgraph,'prob',layer2);
+% lgraph = replaceLayer(lgraph,'output',layer3);
+
+lgraph = addLayers(lgraph
 
 %% Options d'entrainement
 options = trainingOptions('sgdm', ...
@@ -83,7 +95,7 @@ options = trainingOptions('sgdm', ...
 %       'MaxEpochs',2);
   
 %% Entrainement!!
-net = trainNetwork(imdsTrain,layerGraph(net),options);
+net = trainNetwork(imdsTrain,lgraph,options);
 
 %% Mesure la précision
 % YPred = classify(net,imdsValidation);

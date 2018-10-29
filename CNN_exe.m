@@ -4,8 +4,8 @@
 % load netInsect1
 % net = netInsect1;
 % net = vgg16
-load netVgg16
-net = netVgg16;
+% load netVgg16
+% net = netVgg16;
 
 %% Charge la BDD
 % currentFolder = pwd;
